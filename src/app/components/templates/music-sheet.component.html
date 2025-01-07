@@ -1,0 +1,24 @@
+<div id="music-sheet"></div>
+<div class="controls">
+    <label for="note">Select Note:</label>
+    <select id="note" (change)="onNoteChange($event)">
+      <option value="c/4">C4</option>
+      <option value="d/4">D4</option>
+      <option value="e/4">E4</option>
+      <option value="f/4">F4</option>
+      <option value="g/4">G4</option>
+      <option value="a/4">A4</option>
+      <option value="b/4">B4</option>
+    </select>
+
+    <label for="duration">Select Duration:</label>
+    <select id="duration" (change)="onDurationChange($event)">
+      <option value="1">Whole</option>
+      <option value="2">Half</option>
+      <option value="4">Quarter</option>
+      <option value="8">Eighth</option>
+      <option value="16">Sixteenth</option>
+    </select>
+
+    <button id="renderButton" (click)="addNote()">Render Note</button>
+</div>
