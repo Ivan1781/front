@@ -12,6 +12,8 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   
   private currentStave!:Stave;
 
+  private initialYStaveCoordinate: number = 0;
+
   private renderer!: Renderer;
   private svgContainer: HTMLDivElement | null = null;
   private context: any;
@@ -21,8 +23,9 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
 
   private staves: Stave[] = [];
   
-  selectedNote: string = "c/4";   // Default note
+  selectedNote: string = "c/4";
   selectedDuration: string = "1";
+
 
   ngOnInit(): void {}
 
@@ -45,7 +48,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
     //   console.log("Document-relative:", event.pageX, event.pageY); // Relative to document
     // });
 
-      this.currentStave = new Stave(0, 0, this.svgContainer.offsetWidth);
+      this.currentStave = new Stave(0, this.initialYStaveCoordinate, this.svgContainer.offsetWidth);
       this.currentStave.addTimeSignature("4/4");
       this.currentStave.addClef('treble').setContext(this.context).draw();
 
@@ -53,9 +56,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
 
       window.addEventListener('resize', () => {
         this.updateStaveSize();
-    });
-
-    
+    }); 
   }
 
   private updateStaveSize(): void {
@@ -84,6 +85,8 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
     }
   }
 
+  onMeasure(): void {}
+
   addNote(): void {
     const note = new StaveNote({    
       clef: "treble", 
@@ -94,50 +97,77 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   private renderNotes(newNote:StaveNote): void {
-      if (!this.currentStave || !this.context) return;
+    if (!this.currentStave || !this.context) return;
 
-      this.context.clear();
+    this.context.clear();
 
-      this.currentNotes.push(newNote);
+    // add newNote to the notes array of current stave
+    this.currentNotes.push(newNote);
 
-      this.staves.forEach((stave)=> stave.setContext(this.context).draw());
+    // draw all staves
+    this.staves.forEach((stave)=> stave.setContext(this.context).draw());
+    
+    // calculate the duration of stave
+    let durations: number[] = this.currentNotes.map((a)=> Number(a.getDuration()));
+    console.log(durations);
+    let staveDuration = durations.reduce( (a,b)=> a + 1/b, 0 );
+    console.log(staveDuration)
+    
+    // if stave completed:
+    if (staveDuration == 1) {
+      let nextStave = null;
+      if(this.svgContainer) {
 
-        let durations: number[] = this.currentNotes.map((a)=> Number(a.getDuration()));
-      
-        console.log(durations);
-        let staveDuration = durations.reduce( (a,b)=> a + 1/b, 0 );
-        console.log(staveDuration)
-        if (staveDuration == 1 && this.staves.length === 1) {
-          let secondStave = null;
-          if(this.svgContainer) {
-          this.notes.push(this.currentNotes);
+        // push the notes array of completed stave to the whole note set 
+        this.notes.push(this.currentNotes);
+        
+        // let timeSignature: {
+        //   bar: number;
+        //   beat: number
+        // }
+
+        this.initialYStaveCoordinate += 120;
+
+        nextStave = new Stave(0, this.initialYStaveCoordinate, this.svgContainer.offsetWidth);  
+        nextStave.addTimeSignature("4/4");
+        // nextStave.addClef('treble');
+        this.staves.push(nextStave);
           
-          secondStave = new Stave(0, 120, this.svgContainer.offsetWidth);  
-          
-          secondStave.addTimeSignature("5/4");
-          secondStave.addClef('treble');
-          this.staves.push(secondStave);
-          
-          const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
-          Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
-          beams.forEach((b) => {
+        const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
+        Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
+        
+        this.renderPreviousStaves();
+
+        // draw the note of current stave
+        beams.forEach((b) => {
           b.setContext(this.context).draw();
         });   
       } 
       this.currentNotes = [];
-      if(secondStave) {
-        this.currentStave = secondStave;
+      if(nextStave) {
+        this.currentStave = nextStave;
       }
     }
-      if (this.currentNotes.length > 0) {
-
-        const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
-        Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
-        beams.forEach((b) => {
-          b.setContext(this.context).draw();
-          });
-      }
-
+    if (this.currentNotes.length > 0) {
+      this.renderPreviousStaves(); 
+      const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
+      Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
+      beams.forEach((b) => {
+        b.setContext(this.context).draw();
+      });
+    }
   }
 
+  private renderPreviousStaves(): void {
+    if(this.notes.length > 0) {
+      for (let e = 0; e < this.notes.length; e++) {
+      var a = this.notes[e];
+      const beams = Vex.Flow.Beam.generateBeams(a);
+      Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[e], a);
+      beams.forEach((b) => {
+        b.setContext(this.context).draw();
+      });
+    }
+  }
+  }
 }
