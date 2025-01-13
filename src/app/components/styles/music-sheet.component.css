@@ -1,6 +1,7 @@
 #music-sheet {
     width: 90vw;
-    height: 60vh;
+    /* height: 60vh; */
+    /* height: auto;  */
     border: 1px solid rgb(232, 135, 9);
     margin: 20px auto;
     box-sizing: border-box;
