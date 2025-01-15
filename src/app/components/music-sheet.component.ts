@@ -72,6 +72,9 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
           this.context.clear();
           console.log(this.currentStave.getHeight())
           this.currentStave.setContext(this.context).draw();
+
+          this.staves.forEach(stave=>stave.setContext(this.context).draw());
+          this.renderNotesPreviousStaves()
       }
   }
 
@@ -130,7 +133,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
         const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
         Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
 
-        this.renderPreviousStaves();
+        this.renderNotesPreviousStaves();
 
         // draw the beams for notes of current stave
         beams.forEach((beam) => {
@@ -144,7 +147,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
       this.adjustContainerHeight()
     }
     if (this.currentNotes.length > 0) {
-      this.renderPreviousStaves();
+      this.renderNotesPreviousStaves();
       const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
       Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
       beams.forEach((beam) => {
@@ -161,7 +164,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
     this.renderer.resize(980, parseInt(this.svgContainer.style.height));
   }
 
-  private renderPreviousStaves(): void {
+  private renderNotesPreviousStaves(): void {
       if(this.notes.length > 0) {
         for (let counter = 0; counter < this.notes.length; counter++) {
         var staveNotes = this.notes[counter];
