@@ -18,8 +18,6 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   private context: any;
   private currentNotes: StaveNote[] = [];
 
-  private svgElement: SVGSVGElement | null = null;
-
   private notes: StaveNote[][] = [];
 
   private staves: Stave[] = [];
@@ -27,6 +25,8 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   selectedNote: string = "c/4";
   selectedDuration: string = "1";
 
+
+  private containerBoundingRect?: DOMRect;
 
   ngOnInit(): void {}
 
@@ -39,39 +39,30 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
     this.renderer = new Renderer(this.svgContainer, Renderer.Backends.SVG);
     this.context = this.renderer.getContext();
 
-    console.log(this.svgContainer.offsetWidth)
-    console.log(this.svgContainer.offsetHeight)
-
-    this.svgElement = this.svgContainer.querySelector('svg');
-    this.updateStaveSize();
-
-    // document.addEventListener('click', (event) => {
-    //   console.log("Viewport-relative:", event.clientX, event.clientY); // Relative to viewport
-    //   console.log("Document-relative:", event.pageX, event.pageY); // Relative to document
-    // });
-
-      this.currentStave = new Stave(0, this.initialYStaveCoordinate, this.svgContainer.offsetWidth);
+    this.updateStaveContainerSize();
+    if(this.containerBoundingRect) {
+      this.currentStave = new Stave(0, this.initialYStaveCoordinate, this.containerBoundingRect.width);
       this.currentStave.addTimeSignature("4/4");
       this.currentStave.addClef('treble').setContext(this.context).draw();
       this.initialYStaveCoordinate += 120;
       this.staves.push(this.currentStave);
+    }
 
-      window.addEventListener('resize', () => {
-        this.updateStaveSize();
+    window.addEventListener('resize', () => {
+      this.updateStaveContainerSize();
     });
   }
 
-  private updateStaveSize(): void {
+  private updateStaveContainerSize(): void {
       if (!this.svgContainer) return;
+      this.containerBoundingRect = this.svgContainer.getBoundingClientRect();
+      this.renderer.resize(this.containerBoundingRect.width, this.containerBoundingRect.height);
 
-      const containerBoundingRect = this.svgContainer.getBoundingClientRect();
-      this.renderer.resize(containerBoundingRect.width, containerBoundingRect.height);
-      console.log(this.currentStave)
       if (this.currentStave) {
-          this.currentStave.setWidth(containerBoundingRect.width);
+          this.currentStave.setWidth(this.containerBoundingRect.width);
           this.context.clear();
-          console.log(this.currentStave.getHeight())
           this.currentStave.setContext(this.context).draw();
+
 
           this.staves.forEach(stave=>stave.setContext(this.context).draw());
           this.renderNotesPreviousStaves()
