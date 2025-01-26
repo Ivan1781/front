@@ -1,6 +1,5 @@
 import { Component, OnInit, AfterViewInit } from '@angular/core';
 import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
-// import {RenderContext} from 'vexflow/src/rendercontext';
 
 @Component({
   selector: 'app-music-sheet',
@@ -10,18 +9,16 @@ import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow
 })
 export class MusicSheetComponent implements OnInit, AfterViewInit {
 
-  private initialYStaveCoordinate: number = 0;
   private currentContainerIndex: number = 0;
 
+  private raws: { stave: Stave; renderer: Renderer; context: RenderContext; notes: StaveNote[] }[] = [];
+
   private currentStave!:Stave;
-  private renderer!: Renderer;
-  private svgContainer: HTMLDivElement | null = null;
-  private context: any;
+  private currentRenderer!: Renderer;
+  private context!: RenderContext;
   private currentNotes: StaveNote[] = [];
 
-  private notes: StaveNote[][] = [];
-
-  private staves: Stave[] = [];
+  private svgContainer: HTMLDivElement | null = null;
 
   selectedNote: string = "c/4";
   selectedDuration: string = "1";
@@ -48,43 +45,42 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   private getContextForSvgContainer(svgContainer: HTMLDivElement): RenderContext {
-      this.renderer = new Renderer(svgContainer, Renderer.Backends.SVG);
-      return this.renderer.getContext();
+      this.currentRenderer = new Renderer(svgContainer, Renderer.Backends.SVG);
+      return this.currentRenderer.getContext();
   }
 
   private initializeStave(): void {
-    this.svgContainer = this.initializeSvgContainer();
+    this.svgContainer = this.initializeSvgContainer(); // div
     this.context = this.getContextForSvgContainer(this.svgContainer);
 
     this.updateStaveContainerSize();
 
     if(this.containerBoundingRect) {
-      this.currentStave = new Stave(0, this.initialYStaveCoordinate, this.containerBoundingRect.width);
+      this.currentStave = new Stave(0, 0, this.containerBoundingRect.width/100*90);
       this.currentStave.addTimeSignature("4/4");
       this.currentStave.addClef('treble').setContext(this.context).draw();
-      // this.initialYStaveCoordinate += 120;
-      this.staves.push(this.currentStave);
     }
 
-    window.addEventListener('resize', () => {
-      this.updateStaveContainerSize();
-    });
+    // window.addEventListener('resize', () => {
+    //   this.updateStaveContainerSize();
+    // });
   }
 
   private updateStaveContainerSize(): void {
       if (!this.svgContainer) return;
       this.containerBoundingRect = this.svgContainer.getBoundingClientRect();
-      this.renderer.resize(this.containerBoundingRect.width, this.containerBoundingRect.height);
+      console.log("boundingRect " + JSON.stringify(this.containerBoundingRect))
+      this.currentRenderer.resize(this.containerBoundingRect.width, this.containerBoundingRect.height);
 
-      if (this.currentStave) {
-          this.currentStave.setWidth(this.containerBoundingRect.width);
-          this.context.clear();
-          this.currentStave.setContext(this.context).draw();
-
-
-          this.staves.forEach(stave=>stave.setContext(this.context).draw());
-          this.renderNotesPreviousStaves()
-      }
+      // if (this.currentStave) {
+      //     this.currentStave.setWidth(this.containerBoundingRect.width);
+      //     this.context.clear();
+      //     this.currentStave.setContext(this.context).draw();
+      //
+      //
+      //     this.staves.forEach(stave=>stave.setContext(this.context).draw());
+      //     this.renderNotesPreviousStaves()
+      // }
   }
 
   onNoteChange(event: Event): void {
@@ -124,16 +120,13 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
       let staveDuration = durations.reduce( (a,b)=> a + 1/b, 0 );
       console.log(staveDuration)
 
+
       // if stave completed:
       if (staveDuration == 1) {
         let nextStave = null;
         if(this.svgContainer) {
 
-          // push the notes array of completed stave to the whole note set
-          this.notes.push(this.currentNotes);
-
-          console.log('****** ' + this.initialYStaveCoordinate);
-
+          this.currentStave.setContext(this.context).draw()
           const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
           Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
           // draw the beams for notes of current stave
@@ -141,18 +134,29 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
             beam.setContext(this.context).draw();
           });
 
+          // create raw
+          // stave: Stave; renderer: Renderer; context: RenderContext; notes: StaveNote[]
+          let raw = {
+            stave: this.currentStave,
+            renderer: this.currentRenderer,
+            context: this.context,
+            notes: this.currentNotes
+          }
+          this.raws.push(raw)
+
           this.svgContainer = this.initializeSvgContainer();
           this.context = this.getContextForSvgContainer(this.svgContainer);
 
-          this.initialYStaveCoordinate += 154;
-
-          nextStave = new Stave(0, this.initialYStaveCoordinate, this.svgContainer.offsetWidth);
+          nextStave = new Stave(0, 0, this.svgContainer.offsetWidth);
 
           nextStave.addTimeSignature("4/4");
           nextStave.addClef('treble').setContext(this.context).draw();
+          this.updateStaveContainerSize();
+
+
 
           // nextStave.
-          this.staves.push(nextStave);
+          // this.staves.push(nextStave);
 
 
           // this.renderNotesPreviousStaves();
@@ -161,7 +165,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
         if(nextStave) {
           this.currentStave = nextStave;
         }
-        this.adjustGeneralContainerHeight()
+        // this.adjustGeneralContainerHeight()
       }
       if (this.currentNotes.length > 0) {
         const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
@@ -173,23 +177,23 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   private adjustGeneralContainerHeight(): void {
-    if (!this.svgContainer) return;
-    console.log('****[ ' + this.initialYStaveCoordinate);
-    this.svgContainer.style.height = `${this.initialYStaveCoordinate}px`;
-    console.log('height' + this.svgContainer.style.height)
-    this.renderer.resize(580, parseInt(this.svgContainer.style.height));
+    // if (!this.svgContainer) return;
+    // console.log('****[ ' + this.initialYStaveCoordinate);
+    // this.svgContainer.style.height = `${this.initialYStaveCoordinate}px`;
+    // console.log('height' + this.svgContainer.style.height)
+    // this.currentRenderer.resize(580, parseInt(this.svgContainer.style.height));
   }
 
   private renderNotesPreviousStaves(): void {
-      if(this.notes.length > 0) {
-        for (let counter = 0; counter < this.notes.length; counter++) {
-        var staveNotes = this.notes[counter];
-        const beams = Vex.Flow.Beam.generateBeams(staveNotes);
-        Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[counter], staveNotes);
-        beams.forEach((beam) => {
-          beam.setContext(this.context).draw();
-        });
-      }
-    }
+    //   if(this.notes.length > 0) {
+    //     for (let counter = 0; counter < this.notes.length; counter++) {
+    //     var staveNotes = this.notes[counter];
+    //     const beams = Vex.Flow.Beam.generateBeams(staveNotes);
+    //     Vex.Flow.Formatter.FormatAndDraw(this.context, this.staves[counter], staveNotes);
+    //     beams.forEach((beam) => {
+    //       beam.setContext(this.context).draw();
+    //     });
+    //   }
+    // }
   }
 }
