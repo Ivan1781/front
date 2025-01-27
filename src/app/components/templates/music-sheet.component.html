@@ -11,8 +11,8 @@
       <option value="b/4">B4</option>
     </select>
 
-    <label for="duration">Select Duration:</label>
-    <select id="duration" (change)="onDurationChange($event)">
+    <label for="durationNote">Select note duration:</label>
+    <select id="durationNote" (change)="onDurationChange($event)">
       <option value="1">Whole</option>
       <option value="2">Half</option>
       <option value="4">Quarter</option>
@@ -20,5 +20,16 @@
       <option value="16">Sixteenth</option>
     </select>
 
-    <button id="renderButton" (click)="addNote()">Render Note</button>
+  <label for="durationRest">Select rest duration:</label>
+  <select id="durationRest" (change)="onDurationChange($event)">
+    <option value="1r">Whole</option>
+    <option value="2r">Half</option>
+    <option value="4r">Quarter</option>
+    <option value="8r">Eighth</option>
+    <option value="16r">Sixteenth</option>
+  </select>
+
+  <button id="renderButton" (click)="addNote()">Render Note</button><br>
+  <label for="removeNote">Remove previous Note </label>
+  <button id="removeNote" (click)="removePreviousNote()">Remove Note</button>
 </div>
