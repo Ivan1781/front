@@ -61,9 +61,9 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
       this.currentStave.addClef('treble').setContext(this.context).draw();
     }
 
-    // window.addEventListener('resize', () => {
-    //   this.updateStaveContainerSize();
-    // });
+    window.addEventListener('resize', () => {
+
+    });
   }
 
   private updateStaveContainerSize(): void {
@@ -71,16 +71,6 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
       this.containerBoundingRect = this.svgContainer.getBoundingClientRect();
       console.log("boundingRect " + JSON.stringify(this.containerBoundingRect))
       this.currentRenderer.resize(this.containerBoundingRect.width, this.containerBoundingRect.height);
-
-      // if (this.currentStave) {
-      //     this.currentStave.setWidth(this.containerBoundingRect.width);
-      //     this.context.clear();
-      //     this.currentStave.setContext(this.context).draw();
-      //
-      //
-      //     this.staves.forEach(stave=>stave.setContext(this.context).draw());
-      //     this.renderNotesPreviousStaves()
-      // }
   }
 
   onNoteChange(event: Event): void {
@@ -136,8 +126,8 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
 
           this.svgContainer = this.initializeSvgContainer();
           this.context = this.getContextForSvgContainer(this.svgContainer);
-
-          nextStave = new Stave(0, 0, this.svgContainer.offsetWidth);
+          this.containerBoundingRect = this.svgContainer.getBoundingClientRect();
+          nextStave = new Stave(0, 0, this.containerBoundingRect.width/100*90);
 
           nextStave.addTimeSignature("4/4");
           nextStave.addClef('treble').setContext(this.context).draw();
@@ -157,7 +147,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   public removePreviousNote():void {
     this.currentNotes.pop();
     this.context.clear();
-    if (this.currentNotes.length == 0) {
+    if (this.currentNotes.length == 0 && this.rows.length > 0) {
       this.svgContainer?.remove()
       const row = this.rows.pop()
       if (row) {
@@ -173,11 +163,16 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   private renderStaveNotes():void {
-    const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
-    Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
-    beams.forEach((beam) => {
-      beam.setContext(this.context).draw();
-    });
+    try {
+      const beams = Vex.Flow.Beam.generateBeams(this.currentNotes);
+      Vex.Flow.Formatter.FormatAndDraw(this.context, this.currentStave, this.currentNotes);
+      beams.forEach((beam) => {
+        beam.setContext(this.context).draw();
+      });
+    } catch (error) {
+      console.log("There are no any notes")
+    }
+
   }
 
   private getNotesDuration(): Number {
