@@ -1,5 +1,7 @@
-import { Component, OnInit, AfterViewInit } from '@angular/core';
+import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
 import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
+import {debounceTime, fromEvent, Subscription} from 'rxjs';
+
 
 @Component({
   selector: 'app-music-sheet',
@@ -12,6 +14,9 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   private currentContainerIndex: number = 0;
 
   private rows: { stave: Stave; renderer: Renderer; context: RenderContext; notes: StaveNote[]; svgContainer :HTMLDivElement }[] = [];
+
+  @ViewChild('musicContainer', {static: false }) musicContainer!: ElementRef;
+  private resizeSubscription!: Subscription;
 
   private currentStave!:Stave;
   private currentRenderer!: Renderer;
@@ -61,9 +66,14 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
       this.currentStave.addClef('treble').setContext(this.context).draw();
     }
 
-    window.addEventListener('resize', () => {
+    this.resizeSubscription = fromEvent(window, 'resize')
+      .pipe(debounceTime(400))
+      .subscribe(() => this.onResize());
+  }
 
-    });
+  private onResize() {
+    console.log("HellO!")
+    console.log(this.musicContainer.nativeElement.clientWidth);
   }
 
   private updateStaveContainerSize(): void {
