@@ -1,8 +1,6 @@
 import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
 import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
 import {debounceTime, fromEvent, Subscription} from 'rxjs';
-import {Context} from 'node:vm';
-
 
 @Component({
   selector: 'app-music-sheet',
@@ -72,27 +70,19 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   private onResize() {
-    console.log("HellO!")
-    console.log(this.musicContainer.nativeElement.clientWidth);
-    console.log(this.rows.length)
-
     for(let lineNumber = 0; lineNumber < this.rows.length; lineNumber++) {
-        const row = this.rows[lineNumber];
+        const row = this.rows[lineNumber]
         this.resizeStave(row.context, row.renderer, row.stave, row.notes)
     }
-    console.log("******")
-    console.log(this.context)
     this.resizeStave(this.context, this.currentRenderer, this.currentStave, this.currentNotes)
-
   }
 
   private resizeStave(context: RenderContext, renderer: Renderer, stave:Stave, notes: StaveNote[] ): void {
-    context.clear()
     if (this.containerBoundingRect)
-      renderer.resize(this.musicContainer.nativeElement.clientWidth,
-        this.containerBoundingRect.height)
+      renderer.resize(this.musicContainer.nativeElement.clientWidth, this.containerBoundingRect.height)
+    context.clear()
+    context = renderer.getContext()
     stave.setWidth(this.musicContainer.nativeElement.clientWidth)
-    context = renderer.getContext();
     stave.setContext(context).draw()
     this.renderStaveNotes(notes, stave, context)
   }
@@ -186,6 +176,7 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
         this.currentNotes = row.notes
         this.context = row.context
         this.divContainerForSvg = row.svgContainer
+        this.currentRenderer = row.renderer
       }
     } else {
       this.currentStave.setContext(this.context).draw();
