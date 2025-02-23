@@ -1,6 +1,7 @@
 import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
 import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
 import {debounceTime, fromEvent, Subscription} from 'rxjs';
+import {NotesTransmitterService} from '../services/notes-transmitter.service';
 
 @Component({
   selector: 'app-music-sheet',
@@ -27,6 +28,8 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   selectedDuration: string = "1";
 
   private containerBoundingRect?: DOMRect;
+
+  constructor(private messageService: NotesTransmitterService) {}
 
   ngOnInit(): void {}
 
