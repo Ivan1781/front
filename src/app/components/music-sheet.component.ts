@@ -207,4 +207,20 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
     console.log(staveDuration)
     return staveDuration
   }
+
+  callService(): void {
+    let message: any;
+    let error: string | null;
+    this.messageService.getMessage().subscribe({
+      next:(x) => {
+        message = x;
+        error = null;
+        console.log(x)
+      },
+      error: (x) => {
+        error = x.message;
+      }
+    });
+    console.log(message)
+  }
 }
