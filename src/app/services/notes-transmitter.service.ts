@@ -9,11 +9,16 @@ import {catchError, Observable, throwError} from 'rxjs';
 export class NotesTransmitterService {
 
   private apiUrl = environment.apiBaseUrl + 'health';
+  private apiUrl2 = environment.apiBaseUrl + 'notes';
 
   constructor(private http: HttpClient) { }
 
   getMessage(): Observable<any> {
     return this.http.get(this.apiUrl).pipe(catchError((error) => this.handleError(error)));
+  }
+
+  sendMessage(): Observable<any> {
+    return this.http.post(this.apiUrl2, "Hello,service")
   }
 
   private handleError(error: any): Observable<never> {

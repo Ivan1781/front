@@ -2,6 +2,7 @@ import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/
 import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
 import {debounceTime, fromEvent, Subscription} from 'rxjs';
 import {NotesTransmitterService} from '../services/notes-transmitter.service';
+import {response} from 'express';
 
 @Component({
   selector: 'app-music-sheet',
@@ -222,5 +223,12 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
       }
     });
     console.log(message)
+  }
+
+  sendToService() {
+    this.messageService.sendMessage().subscribe({
+      next: response => console.log('Success', response),
+      error: err => console.error('Error', err)
+    })
   }
 }
