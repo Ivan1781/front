@@ -17,8 +17,8 @@ export class NotesTransmitterService {
     return this.http.get(this.apiUrl).pipe(catchError((error) => this.handleError(error)));
   }
 
-  sendMessage(): Observable<any> {
-    return this.http.post(this.apiUrl2, "Hello,service")
+  sendMessage(message: any): Observable<any> {
+    return this.http.post(this.apiUrl2, message)
   }
 
   private handleError(error: any): Observable<never> {

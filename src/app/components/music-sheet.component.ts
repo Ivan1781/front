@@ -2,7 +2,7 @@ import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/
 import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
 import {debounceTime, fromEvent, Subscription} from 'rxjs';
 import {NotesTransmitterService} from '../services/notes-transmitter.service';
-import {response} from 'express';
+import {NoteDTO} from '../models/NoteDTO';
 
 @Component({
   selector: 'app-music-sheet',
@@ -226,9 +226,25 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   sendToService() {
-    this.messageService.sendMessage().subscribe({
-      next: response => console.log('Success', response),
-      error: err => console.error('Error', err)
-    })
-  }
+    const notesArray: StaveNote[] | undefined = this.rows.pop()?.notes
+
+    console.log(notesArray)
+    let notesForTransmission: NoteDTO[] = [];
+
+    if (notesArray && notesArray.length > 0) {
+      for (let i = 0; i < notesArray.length; i++) {
+        const note: NoteDTO = {
+          duration: notesArray[i].getDuration(),
+          keys: notesArray[i].getKeys()
+        }
+        notesForTransmission.push(note);
+      }
+    }
+    this.messageService.sendMessage(notesForTransmission).subscribe({
+        next: response => console.log('Success', response),
+        error: err => console.error('Error', err)
+      })
+
+    }
+
 }
