@@ -14,7 +14,13 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   @ViewChild('musicContainer', {static: false }) musicContainer!: ElementRef;
 
   private currentContainerIndex: number = 0;
-  private rows: { stave: Stave; renderer: Renderer; context: RenderContext; notes: StaveNote[]; svgContainer :HTMLDivElement }[] = [];
+  private rows: {
+    stave: Stave;
+    renderer: Renderer;
+    context: RenderContext;
+    notes: StaveNote[];
+    svgContainer :HTMLDivElement
+  }[] = [];
 
   private resizeSubscription!: Subscription;
 
@@ -226,9 +232,13 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
   }
 
   sendToService() {
-    const notesArray: StaveNote[] | undefined = this.rows.pop()?.notes
 
-    console.log(notesArray)
+    const staves = new Map<string, NoteDTO[]>;
+
+    for (let y = 0; y < this.rows.length; y++) {
+
+    const notesArray: StaveNote[] | undefined = this.rows[y].notes;
+    const stave: Stave = this.rows[y].stave
     let notesForTransmission: NoteDTO[] = [];
 
     if (notesArray && notesArray.length > 0) {
@@ -236,11 +246,19 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
         const note: NoteDTO = {
           duration: notesArray[i].getDuration(),
           keys: notesArray[i].getKeys()
+          }
+          notesForTransmission.push(note);
         }
-        notesForTransmission.push(note);
       }
+    staves.set( "4" , notesForTransmission);
+    // console.log("********");
+    //   const modifiers = stave.getModifiers();
+    //
+    //
+    // console.log(modifiers[2]);
+    // console.log(modifiers[2].getAttribute("timeSpec"));
     }
-    this.messageService.sendMessage(notesForTransmission).subscribe({
+    this.messageService.sendMessage(staves).subscribe({
         next: response => console.log('Success', response),
         error: err => console.error('Error', err)
       })
