@@ -1,5 +1,5 @@
 import {Component, OnInit, AfterViewInit, ViewChild, ElementRef} from '@angular/core';
-import { Renderer, Stave, StaveNote, TabNote,  RenderContext, Vex} from 'vexflow';
+import {Renderer, Stave, StaveNote, TabNote, RenderContext, Vex, TimeSignature} from 'vexflow';
 import {debounceTime, fromEvent, Subscription} from 'rxjs';
 import {NotesTransmitterService} from '../services/notes-transmitter.service';
 import {NoteDTO} from '../models/NoteDTO';
@@ -233,36 +233,35 @@ export class MusicSheetComponent implements OnInit, AfterViewInit {
 
   sendToService() {
 
-    const staves = new Map<string, NoteDTO[]>;
+    type Entry = {
+      key: string,
+      value: NoteDTO[];
+    }
+
+    const staves: Entry[] = [];
 
     for (let y = 0; y < this.rows.length; y++) {
+      const notesArray: StaveNote[] | undefined = this.rows[y].notes;
+      const stave: Stave = this.rows[y].stave
 
-    const notesArray: StaveNote[] | undefined = this.rows[y].notes;
-    const stave: Stave = this.rows[y].stave
-    let notesForTransmission: NoteDTO[] = [];
+      let notesForTransmission: NoteDTO[] = [];
 
-    if (notesArray && notesArray.length > 0) {
-      for (let i = 0; i < notesArray.length; i++) {
-        const note: NoteDTO = {
-          duration: notesArray[i].getDuration(),
-          keys: notesArray[i].getKeys()
+      if (notesArray && notesArray.length > 0) {
+        for (let i = 0; i < notesArray.length; i++) {
+          const note: NoteDTO = {
+            duration: notesArray[i].getDuration(),
+            keys: notesArray[i].getKeys()
           }
           notesForTransmission.push(note);
         }
       }
-    staves.set( "4" , notesForTransmission);
-    // console.log("********");
-    //   const modifiers = stave.getModifiers();
-    //
-    //
-    // console.log(modifiers[2]);
-    // console.log(modifiers[2].getAttribute("timeSpec"));
+      const timeSignature = stave.getModifiers().find(mod => mod instanceof TimeSignature) as TimeSignature;
+      staves.push({key: timeSignature.getTimeSpec(), value: notesForTransmission});
     }
     this.messageService.sendMessage(staves).subscribe({
-        next: response => console.log('Success', response),
-        error: err => console.error('Error', err)
-      })
-
-    }
+      next: response => console.log('Success', response),
+      error: err => console.error('Error', err)
+    })
+  }
 
 }
